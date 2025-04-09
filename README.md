@@ -1,6 +1,6 @@
 # Pixel Pusher - A Natural Language Game Recommender
 
-[A web app]([https://staging.dl8bwarntldti.amplifyapp.com/]) to recommend games based on natural language input.
+[A web app](https://staging.dl8bwarntldti.amplifyapp.com/) to recommend games based on natural language input.
 
 ## Project Overview
 Data has been fetched from the IGDB database user their API, narrowed down by the most import criteria. Data was organized, lightly cleaned, and then sent off to the cloud (Lambda Labs) to compute vector embeddings, this is for the user input to be compared against. User input is computed via the Jina AI API and then retrieved as vector embeddings in the same dimensions as the precomputed database. REST API construced with Flask for recommend, login, game save, and other functions. User data is stored via SQL tables. The backend code along with the data was Dockerized and then pushed to AWS for deployment. Frontend was deployed using AWS Amplify. Computations handled on AWS Lambda, user data stored on DynamoDB and API calls handled with API Gateway.
