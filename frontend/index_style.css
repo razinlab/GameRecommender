@@ -1,0 +1,120 @@
+body {
+      background-color: #e6e6e6;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header {
+      background-color: #7a6890;
+      color: white;
+      text-align: center;
+      padding: 20px 0;
+      margin-bottom: 0;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin: 0;
+    }
+
+    .content-container {
+      display: flex;
+      justify-content: center;
+      padding: 40px 0;
+    }
+
+    .game-input {
+      width: 80%;
+      max-width: 800px;
+      background-color: white;
+      border-radius: 6px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .game-description {
+      resize: vertical;
+      width: 100%;
+      min-height: 150px;
+      max-height: 400px;
+      padding: 15px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    .recommend-btn {
+      background-color: #7a6890;
+      color: white;
+      border: none;
+      padding: 8px 25px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: block;
+      margin: 10px auto 0;
+    }
+
+    .recommend-btn:hover {
+      background-color: #695980;
+    }
+
+    #results {
+      width: 100%;
+      max-width: 800px;
+      margin: 20px auto;
+      margin-bottom: 1rem;
+    }
+
+    .slide-down {
+      animation: slideDown 0.5s ease-out forwards;
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    @keyframes slideDown {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .game-card {
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    }
+
+    .game-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Add this to index_style.css */
+.navbar-custom {
+    background-color: #7a6890 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;  /* This makes it stay fixed */
+    top: 0;           /* Position at the very top */
+    width: 100%;      /* Full width */
+    z-index: 1030;    /* Ensures it stays above other content */
+}
+
+/* Add padding to body to account for fixed navbar */
+body {
+    padding-top: 56px; /* Height of navbar */
+    background-color: #e6e6e6;
+    margin: 0;
+}
+.disabled-btn {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: #6c757d !important;
+}
+
+.game-links a {
+  font-size: 0.8rem;
+}
+
+
+

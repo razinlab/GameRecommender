@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>My Games - Pixel Pusher</title>
+  <link rel="icon" type="image/png" href="motimon.png"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="my_games_style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+  <div class="container">
+    <a class="navbar-brand navbar-brand-custom" href="https://github.com/razinlab" target="_blank">Pixel Pusher</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom" href="index.html">Home</a>
+        </li>
+        <li class="nav-item" id="loginNavItem">
+          <a class="nav-link nav-link-custom" href="login.html">Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom active" href="my_games.html">My Games</a>
+        </li>
+        <li class="nav-item" id="logoutNavItem" style="display: none;">
+          <a class="nav-link nav-link-custom" href="#" id="logoutLink">Logout</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="my-games-container">
+  <div class="games-section">
+    <h2 class="section-header">My Saved Games</h2>
+
+    <!-- Login prompt (shown if not logged in) -->
+    <div id="loginPrompt" class="login-prompt">
+      <p>You need to be logged in to view your saved games.</p>
+      <a href="login.html" class="login-btn">Log In</a>
+    </div>
+
+    <!-- Games list (shown if logged in) -->
+    <div id="gamesList" style="display: none;">
+      <!-- Games will be loaded here via JavaScript -->
+      <div id="noGamesMessage" class="no-games-message">
+        <p>You haven't saved any games yet.</p>
+        <p>Go to the home page and start saving your favorite games!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_ENDPOINT = "https://9mjztjwxyb.execute-api.us-east-2.amazonaws.com/Prod";
+
+  const token = localStorage.getItem("token");
+  const username = localStorage.getItem("username");
+
+  function updateNavigation() {
+    if (token) {
+      document.getElementById("loginNavItem").style.display = "none";
+      document.getElementById("logoutNavItem").style.display = "block";
+    } else {
+      document.getElementById("loginNavItem").style.display = "block";
+      document.getElementById("logoutNavItem").style.display = "none";
+    }
+  }
+
+  async function loadSavedGames() {
+    if (!token) {
+      document.getElementById("loginPrompt").style.display = "block";
+      document.getElementById("gamesList").style.display = "none";
+      return;
+    }
+
+    document.getElementById("loginPrompt").style.display = "none";
+    document.getElementById("gamesList").style.display = "block";
+
+    try {
+      const response = await fetch(`${API_ENDPOINT}/saved-games`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.games && data.games.length > 0) {
+          document.getElementById("noGamesMessage").style.display = "none";
+
+          const gamesList = document.getElementById("gamesList");
+
+          const existingGames = gamesList.querySelectorAll(".card");
+          existingGames.forEach(game => game.remove());
+
+
+          data.games.forEach(game => {
+            const gameCard = document.createElement("div");
+            gameCard.className = "card mb-3";
+            gameCard.dataset.gameId = game.game_id;
+
+              let linksHtml = "";
+              const linkMap = {
+                steam_url: "Steam",
+                gog_url: "GOG",
+                xbox_url: "Xbox",
+                playstation_url: "PlayStation",
+                epic_url: "Epic Games",
+                nintendo_url: "Nintendo",
+                official_url: "Official Site"
+              };
+
+              for (const [key, label] of Object.entries(linkMap)) {
+                const url = game[key];
+                if (url && url.trim() !== "") {
+                  linksHtml += `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-secondary me-2 mb-1">${label}</a>`;
+                }
+              }
+
+
+            gameCard.innerHTML = `
+              <div class="row g-0">
+                <div class="col-md-4">
+                  ${game.image_url ?
+                    `<img src="${game.image_url}" class="img-fluid rounded-start"
+                    style="max-height: 120px; object-fit: contain;" alt="${game.game_name}">` :
+                    ''}
+                </div>
+                <div class="col-md-8">
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      ${game.game_name}
+                      <i class="fas fa-trash-alt remove-game" title="Remove from saved games"></i>
+                    </h5>
+                    <div class="game-links mt-2">${linksHtml}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+
+
+            const removeBtn = gameCard.querySelector(".remove-game");
+            removeBtn.addEventListener("click", async () => {
+              await removeGame(game.game_id);
+              gameCard.remove();
+
+              const remainingGames = document.querySelectorAll(".card[data-game-id]");
+              if (remainingGames.length === 0) {
+                document.getElementById("noGamesMessage").style.display = "block";
+              }
+            });
+
+            gamesList.appendChild(gameCard);
+          });
+        } else {
+          document.getElementById("noGamesMessage").style.display = "block";
+        }
+      } else if (response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        updateNavigation();
+        document.getElementById("loginPrompt").style.display = "block";
+        document.getElementById("gamesList").style.display = "none";
+      } else {
+        console.error("Error loading saved games");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+
+  async function removeGame(gameId) {
+    try {
+      const response = await fetch(`${API_ENDPOINT}/saved-games/${gameId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        console.error("Error removing game");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+
+
+document.getElementById("logoutLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  updateNavigation();
+  location.reload();
+});
+
+
+  updateNavigation();
+  loadSavedGames();
+</script>
+
+</body>
+</html>

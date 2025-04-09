@@ -1,0 +1,86 @@
+body {
+    padding-top: 56px; /* Height of navbar */
+}
+
+.my-games-container {
+    max-width: 900px;
+    margin: 80px auto 30px; /* Reduced top margin from 120px to 80px */
+    padding: 20px;
+}
+
+    .games-section {
+      padding: 30px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .no-games-message {
+      text-align: center;
+      color: #6c757d;
+      padding: 40px 0;
+    }
+
+    .section-header {
+      color: #7952b3;
+      margin-bottom: 20px;
+    }
+
+    .remove-game {
+      cursor: pointer;
+      color: #dc3545;
+      margin-left: 10px;
+      transition: color 0.3s;
+    }
+
+    .remove-game:hover {
+      color: #b02a37;
+    }
+
+    .login-prompt {
+      text-align: center;
+      margin: 50px 0;
+    }
+
+    .login-btn {
+      background-color: #7a6890;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: background-color 0.3s;
+    }
+
+    .login-btn:hover {
+      background-color: #614092;
+      text-decoration: none;
+      color: white;
+    }
+    /* Add this to my_games_style.css */
+.navbar-custom {
+    background-color: #7a6890 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;  /* This makes it stay fixed */
+    top: 0;           /* Position at the very top */
+    width: 100%;      /* Full width */
+    z-index: 1030;    /* Ensures it stays above other content */
+}
+
+.nav-link-custom {
+    color: white !important;
+}
+
+.nav-link-custom:hover {
+    color: #f8f9fa !important;
+    text-decoration: underline;
+}
+
+.navbar-brand-custom {
+    color: white !important;
+
+}
+
+.navbar-toggler {
+    border-color: rgba(255,255,255,0.5);
+}

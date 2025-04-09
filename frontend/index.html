@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Game Recommender</title>
+  <link rel="icon" type="image/png" href="motimon.png"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="index_style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+  <div class="container">
+    <a class="navbar-brand navbar-brand-custom" href="https://github.com/razinlab" target="_blank">Pixel Pusher</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom active" href="#">Home</a>
+        </li>
+        <li class="nav-item" id="loginNavItem">
+          <a class="nav-link nav-link-custom" href="login.html">Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom" href="my_games.html">My Games</a>
+        </li>
+        <li class="nav-item" id="logoutNavItem" style="display: none;">
+          <a class="nav-link nav-link-custom" href="#" id="logoutLink">Logout</a>
+        </li>
+        <li class="nav-item" id="usernameDisplay" style="display: none;">
+          <span class="nav-link nav-link-custom" style="cursor: default;"></span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="header">
+  <h1>Game Recommender</h1>
+</div>
+
+<div class="content-container">
+  <div class="game-input">
+    <form id="promptForm">
+      <textarea id="prompt" class="game-description" maxlength="300" placeholder="Describe the kind of game you want to play (The more descriptive the better!)"></textarea>
+<div id="charCount" style="text-align:right; font-size: 0.9rem; color: #555;">0 / 300</div>
+
+      <button type="button" class="recommend-btn" id="recommendBtn">Recommend</button>
+    </form>
+  </div>
+</div>
+
+<div id="results"></div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="saveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Pixel Pusher</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="toastMessage">
+      Game saved successfully!
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const API_ENDPOINT = "https://9mjztjwxyb.execute-api.us-east-2.amazonaws.com/Prod";
+
+  const promptTextarea = document.getElementById('prompt');
+  const charCountDisplay = document.getElementById('charCount');
+
+  promptTextarea.addEventListener('input', () => {
+    const charCount = promptTextarea.value.length;
+    charCountDisplay.textContent = `${charCount} / 300`;
+  });
+
+  let lastClickTime = 0;
+  const cooldownPeriod = 10000;
+  const token = localStorage.getItem("token");
+  const username = localStorage.getItem("username");
+
+  function updateNavigation() {
+    if (token && username) {
+      document.getElementById("loginNavItem").style.display = "none";
+      document.getElementById("logoutNavItem").style.display = "block";
+      document.getElementById("usernameDisplay").style.display = "block";
+      document.getElementById("usernameDisplay").querySelector("span").textContent = `Hi, ${username}`;
+    } else {
+      document.getElementById("loginNavItem").style.display = "block";
+      document.getElementById("logoutNavItem").style.display = "none";
+      document.getElementById("usernameDisplay").style.display = "none";
+    }
+  }
+
+  function showToast(message, isSuccess = true) {
+    const toastEl = document.getElementById('saveToast');
+    document.getElementById('toastMessage').textContent = message;
+
+    if (isSuccess) {
+      toastEl.classList.remove('bg-danger', 'text-white');
+    } else {
+      toastEl.classList.add('bg-danger', 'text-white');
+    }
+
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+  }
+
+  async function saveGame(gameElement) {
+    if (!token) {
+      showToast("Please log in to save games", false);
+      return;
+    }
+
+    const gameId = gameElement.dataset.gameId || `game-${Date.now()}`;
+    const gameName = gameElement.querySelector('.card-title').textContent.trim();
+    const imageUrl = gameElement.querySelector('img')?.src || '';
+    const linkElements = gameElement.querySelectorAll('.game-links a');
+    const linkMap = {};
+      linkElements.forEach(link => {
+    const label = link.textContent.trim().toLowerCase().replace(/\s+/g, '');
+      linkMap[label + '_url'] = link.href;
+    });
+
+
+
+    try {
+      const response = await fetch(`${API_ENDPOINT}/saved-games`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          game_id: gameId,
+          game_name: gameName,
+          image_url: imageUrl,
+          game_url: linkMap['officialsite_url'] || '',
+          steam_url: linkMap['steam_url'] || '',
+          gog_url: linkMap['gog_url'] || '',
+          xbox_url: linkMap['xbox_url'] || '',
+          playstation_url: linkMap['playstation_url'] || '',
+          epic_url: linkMap['epicgames_url'] || '',
+          nintendo_url: linkMap['nintendo_url'] || '',
+          official_url: linkMap['officialsite_url'] || ''
+        })
+
+      });
+
+      if (response.ok) {
+        const starIcon = gameElement.querySelector('.star-icon');
+        starIcon.classList.remove('far');
+        starIcon.classList.add('fas', 'text-warning');
+        showToast("Game saved successfully!");
+      } else if (response.status === 409) {
+        showToast("This game is already in your saved games");
+      } else if (response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        updateNavigation();
+        showToast("Please log in to save games", false);
+      } else {
+        showToast("Error saving game", false);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      showToast("Server error. Try again later.", false);
+    }
+  }
+
+  document.getElementById("recommendBtn").addEventListener("click", async () => {
+  const currentTime = Date.now();
+  const timeElapsed = currentTime - lastClickTime;
+
+  if (timeElapsed < cooldownPeriod) {
+    const secondsLeft = Math.ceil((cooldownPeriod - timeElapsed) / 1000);
+    showToast(`Please wait ${secondsLeft} seconds before trying again`, false);
+    return;
+  }
+
+  lastClickTime = currentTime;
+
+  const prompt = document.getElementById("prompt").value;
+  const resultsDiv = document.getElementById("results");
+  if (!prompt.trim()) return;
+
+  const recommendBtn = document.getElementById("recommendBtn");
+  recommendBtn.disabled = true;
+  recommendBtn.classList.add("disabled-btn");
+
+  let countdown = 10;
+  const originalText = recommendBtn.textContent;
+  const countdownInterval = setInterval(() => {
+    recommendBtn.textContent = `Wait (${countdown})`;
+    countdown--;
+    if (countdown < 0) {
+      clearInterval(countdownInterval);
+      recommendBtn.textContent = originalText;
+      recommendBtn.disabled = false;
+      recommendBtn.classList.remove("disabled-btn");
+    }
+  }, 1000);
+
+  resultsDiv.innerHTML = `
+    <div class="text-center my-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Fetching game recommendations...</p>
+    </div>`;
+
+  try {
+    const res = await fetch(`${API_ENDPOINT}/recommend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: prompt })
+    });
+
+    const data = await res.json();
+
+
+    if (data && data.results && data.results.length > 0) {
+      resultsDiv.innerHTML = "<h3>Recommended Games:</h3>";
+
+      const cardsContainer = document.createElement('div');
+      resultsDiv.appendChild(cardsContainer);
+
+      data.results.forEach((game, index) => {
+        const gameCard = document.createElement('div');
+        gameCard.className = 'game-card';
+        gameCard.dataset.gameId = `game-${game.text.replace(/\W+/g, '-').toLowerCase()}-${index}`;
+
+        let linksHtml = "";
+        const linkMap = {
+          steam: "Steam",
+          gog: "GOG",
+          xbox: "Xbox",
+          playstation: "PlayStation",
+          epic: "Epic Games",
+          nintendo: "Nintendo",
+          official: "Official Site"
+        };
+
+        for (const [key, label] of Object.entries(linkMap)) {
+          const url = game.links?.[key];
+          if (url && url.trim() !== "") {
+            linksHtml += `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-secondary me-2 mb-1">${label}</a>`;
+          }
+        }
+
+
+        gameCard.innerHTML = `
+  <div class="card mb-3" style="max-width: 800px;">
+    <div class="row g-0">
+      <div class="col-md-4">
+        ${game.image_url && game.image_url !== "NaN" && game.image_url !== "null" ?
+          `<img src="${game.image_url}" class="img-fluid rounded-start"
+           style="max-height: 120px; object-fit: contain;" alt="${game.text}">` :
+          `<div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-start"
+           style="height: 90px; width: 90px; font-weight: bold; font-size: 0.8rem; padding: 0.25rem; text-align: center;">
+          No Image
+          </div>`}
+      </div>
+      <div class="col-md-8">
+        <div class="card-body">
+          <h5 class="card-title">
+            ${game.text}
+            <i class="far fa-star star-icon ms-2" style="cursor: pointer; transition: all 0.2s ease;"></i>
+          </h5>
+          <div class="game-links mt-2">
+            ${linksHtml}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+
+
+        const starIcon = gameCard.querySelector('.star-icon');
+        starIcon.addEventListener('click', () => {
+          saveGame(gameCard);
+        });
+
+
+        starIcon.addEventListener('mouseenter', () => {
+          if (!starIcon.classList.contains('fas')) {
+            starIcon.classList.add('text-warning');
+          }
+        });
+
+        starIcon.addEventListener('mouseleave', () => {
+          if (!starIcon.classList.contains('fas')) {
+            starIcon.classList.remove('text-warning');
+          }
+        });
+
+        cardsContainer.appendChild(gameCard);
+      });
+
+
+      const cards = cardsContainer.querySelectorAll('.game-card');
+      cards.forEach((card, index) => {
+        setTimeout(() => {
+          card.classList.add('visible');
+        }, 150 * index);
+      });
+    } else {
+      resultsDiv.innerHTML = `
+        <div class="alert alert-info" role="alert">
+          No game recommendations found. Try a different description.
+        </div>`;
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    resultsDiv.innerHTML = `
+      <div class="alert alert-danger" role="alert">
+        Error: ${error.message}
+      </div>`;
+  }
+});
+
+  document.getElementById("promptForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    document.getElementById("recommendBtn").click();
+  });
+
+  document.getElementById("logoutLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  updateNavigation();
+  showToast("You have been logged out");
+  setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+});
+
+
+  updateNavigation();
+</script>
+</body>
+</html>

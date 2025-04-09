@@ -1,0 +1,14 @@
+pandas
+numpy
+requests
+better-profanity
+jwt
+PyJWT
+scipy
+Flask
+flask-cors
+aws-wsgi
+boto3
+flask-limiter
+flask-cors
+mangum

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Login - Pixel Pusher</title>
+  <link rel="icon" type="image/png" href="motimon.png"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="login_style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+  <div class="container">
+    <a class="navbar-brand navbar-brand-custom" href="https://github.com/razinlab" target="_blank">Pixel Pusher</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom" href="index.html">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom active" href="login.html">Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-custom" href="my_games.html">My Games</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="login-container">
+  <div class="auth-section">
+    <div class="auth-container">
+      <div class="auth-form">
+        <h2 class="auth-header">Login</h2>
+        <form id="loginForm">
+          <input type="text" id="loginUsername" class="form-control" placeholder="Username" required>
+          <input type="password" id="loginPassword" class="form-control" placeholder="Password" required>
+          <button type="submit" class="login-btn">Log In</button>
+          <div id="loginError" class="error-message">Invalid username or password</div>
+        </form>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="auth-form">
+        <h2 class="auth-header">Register</h2>
+        <form id="registerForm">
+          <input type="text" id="registerUsername" class="form-control" placeholder="Username" required>
+          <input type="password" id="registerPassword" class="form-control" placeholder="Password" required>
+          <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm Password" required>
+          <button type="submit" class="register-btn">Register</button>
+          <div id="registerError" class="error-message">Registration error</div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_ENDPOINT = "https://9mjztjwxyb.execute-api.us-east-2.amazonaws.com/Prod";
+
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("loginUsername").value;
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+      const response = await fetch(`${API_ENDPOINT}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("username", username);
+        window.location.href = "index.html";
+      } else {
+        document.getElementById("loginError").style.display = "block";
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      document.getElementById("loginError").textContent = "Server error. Please try again.";
+      document.getElementById("loginError").style.display = "block";
+    }
+  });
+
+  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("registerUsername").value;
+    const password = document.getElementById("registerPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    if (password !== confirmPassword) {
+      document.getElementById("registerError").textContent = "Passwords don't match";
+      document.getElementById("registerError").style.display = "block";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_ENDPOINT}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (response.ok) {
+        alert("Registration successful! Please log in.");
+        document.getElementById("registerForm").reset();
+      } else {
+        const data = await response.json();
+        document.getElementById("registerError").textContent = data.message || "Registration failed";
+        document.getElementById("registerError").style.display = "block";
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      document.getElementById("registerError").textContent = "Server error. Please try again.";
+      document.getElementById("registerError").style.display = "block";
+    }
+  });
+</script>
+
+</body>
+</html>
